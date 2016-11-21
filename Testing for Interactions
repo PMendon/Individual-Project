@@ -1,0 +1,134 @@
+*interaction between clientage and number of comorbidities;
+proc sort data=raichu4;
+by clientage;
+run;
+
+PROC LOGISTIC data=raichu4 outtest=full1;
+		
+		class gender policy_household FagerstromC referral
+		mental_treat numinterventions / param=ref ref=first; 
+		model quit30(event='1') = clientage cc gender policy_household 
+		FagerstromC referral mental_treat numinterventions clientage*cc
+	
+		/clparm=wald expb;
+		ods select globaltests parameterestimates oddsratioswald clparmwald; 
+	title ' test Interaction term - Full Model';
+	RUN; 
+proc print data=full1;
+var _lnlike_;
+run;
+
+PROC LOGISTIC data=raichu4 outtest=reduced1;
+		
+		class gender policy_household FagerstromC referral
+		mental_treat numinterventions / param=ref ref=first; 
+		model quit30(event='1') = clientage cc gender policy_household 
+		FagerstromC referral mental_treat numinterventions 
+	
+		/clparm=wald expb;
+		ods select globaltests parameterestimates oddsratios clparmwald; 
+	title ' test Interaction term - Reduced Model';
+	RUN;
+proc print data=reduced1;
+var _lnlike_;
+run;
+
+data lrtest1 (keep=chi_sq p_value);
+merge full1 reduced1 (rename=(_lnlike_=lnlike2));
+chi_sq = -2*(lnlike2-_lnlike_);
+p_value = 1-probchi(chi_sq,1);
+run;
+proc print data=lrtest1;
+title 'Likelihood Ratio Test on Interaction term';
+run;
+
+
+*interaction between fagerstromC and policy_household;
+proc sort data=raichu4;
+by fagerstromC;
+run;
+
+PROC LOGISTIC data=raichu4 outtest=full2;
+		
+		class gender policy_household FagerstromC referral
+		mental_treat numinterventions / param=ref ref=first; 
+		model quit30(event='1') = clientage cc gender policy_household 
+		FagerstromC referral mental_treat numinterventions fagerstromC*policy_household
+	
+		/clparm=wald expb;
+		ods select globaltests parameterestimates oddsratioswald clparmwald; 
+	title ' test Interaction term - Full Model';
+	RUN; 
+proc print data=full2;
+var _lnlike_;
+run;
+
+PROC LOGISTIC data=raichu4 outtest=reduced2;
+		
+		class gender policy_household FagerstromC referral
+		mental_treat numinterventions / param=ref ref=first; 
+		model quit30(event='1') = clientage cc gender policy_household 
+		FagerstromC referral mental_treat numinterventions 
+	
+		/clparm=wald expb;
+		ods select globaltests parameterestimates oddsratios clparmwald; 
+	title ' test Interaction term - Reduced Model';
+	RUN;
+proc print data=reduced2;
+var _lnlike_;
+run;
+
+data lrtest2 (keep=chi_sq p_value);
+merge full2 reduced2 (rename=(_lnlike_=lnlike2));
+chi_sq = -2*(lnlike2-_lnlike_);
+p_value = 1-probchi(chi_sq,1);
+run;
+proc print data=lrtest2;
+title 'Likelihood Ratio Test on Interaction term';
+run;
+
+
+
+*interaction between gender and referral;
+proc sort data=raichu4;
+by gender;
+run;
+
+PROC LOGISTIC data=raichu4 outtest=full3;
+		
+		class gender policy_household FagerstromC referral
+		mental_treat numinterventions / param=ref ref=first; 
+		model quit30(event='1') = clientage cc gender policy_household 
+		FagerstromC referral mental_treat numinterventions gender*referral
+	
+		/clparm=wald expb;
+		ods select globaltests parameterestimates oddsratioswald clparmwald; 
+	title ' test Interaction term - Full Model';
+	RUN; 
+proc print data=full3;
+var _lnlike_;
+run;
+
+PROC LOGISTIC data=raichu4 outtest=reduced3;
+		
+		class gender policy_household FagerstromC referral
+		mental_treat numinterventions / param=ref ref=first; 
+		model quit30(event='1') = clientage cc gender policy_household 
+		FagerstromC referral mental_treat numinterventions 
+	
+		/clparm=wald expb;
+		ods select globaltests parameterestimates oddsratios clparmwald; 
+	title ' test Interaction term - Reduced Model';
+	RUN;
+proc print data=reduced3;
+var _lnlike_;
+run;
+
+data lrtest3 (keep=chi_sq p_value);
+merge full3 reduced3 (rename=(_lnlike_=lnlike2));
+chi_sq = -2*(lnlike2-_lnlike_);
+p_value = 1-probchi(chi_sq,1);
+run;
+proc print data=lrtest3;
+title 'Likelihood Ratio Test on Interaction term';
+run;
