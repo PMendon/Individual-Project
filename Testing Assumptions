@@ -1,0 +1,71 @@
+/* Assess continuous variable assumptions for logistic regression*/ 
+/*Dataset name = ashline4*/ 
+
+/*Age assumptions*/
+PROC loess data=ashline4 plots =none;
+model quit30(event='1') = clientage /smooth=0.4;
+ods output outputstatistics=stats;
+RUN;
+
+PROC sq1;
+select count(quit30) into : total from ashline4;
+QUIT;
+
+data trans;
+set stats;
+adjust =1/&total;
+small=0.0001;
+if pred<small then pred=adjust;
+else if pred>1 -small then pred = 1-adjust;
+pred=log(pred/(1-pred));
+RUN;
+
+proc sort data=trans;
+by clientage;
+RUN;
+
+/*CC assumptions*/ 
+PROC loess data=ashline4 plots =none;
+model quit30(event='1') = CC/smooth=0.4;
+ods output outputstatistics=stats1;
+RUN;
+
+PROC sq1;
+select count(quit30) into : total from ashline4;
+QUIT;
+
+DATA trans1;
+set stats1;
+adjust =1/&total;
+small=0.0001;
+if pred<small then pred=adjust;
+else if pred>1 -small then pred = 1-adjust;
+pred=log(pred/(1-pred));
+RUN;
+
+PROC sort data=trans1;
+by CC;
+RUN;
+
+/*Fagerstrom Continuous Assumptions*/ 
+PROC loess data=ashline4 plots =none;
+model quit30(event='1') = fagerstrom/smooth=0.4;
+ods output outputstatistics=stats1;
+RUN;
+
+PROC sq1;
+select count(quit30) into : total from ashline4;
+QUIT;
+
+DATA trans2;
+set stats2;
+adjust =1/&total;
+small=0.0001;
+if pred<small then pred=adjust;
+else if pred>1 -small then pred = 1-adjust;
+pred=log(pred/(1-pred));
+RUN;
+
+PROC sort data=trans1;
+by fagerstrom;
+RUN;
