@@ -37,7 +37,7 @@ set ashline2;
 	if medication=1 and coaching_Calls_beforeFU =>5 then numinterventions=3;
 	if medication=0 and coaching_Calls_beforeFU =>1 and coaching_Calls_beforeFU <=4 then numinterventions=4;
 	if medication=0 and coaching_Calls_beforeFU =>5 then numinterventions=5;
-	run;
+run;
 
 proc means data=ashline3 n nmiss;
 class NumInterventions;
@@ -59,6 +59,14 @@ set ashline3;
 	if fagerstrom >8 then FagerstromC= 4;
 run;
 
+DATA ashline5; 
+	set ashline4; 
+		if clientage=0 then clientage='.'; 
+RUN; 
+
+PROC MEANS data=ashline5; 
+	var clientage; 
+RUN; 
 
 /*Variable list
 gender
