@@ -2,7 +2,7 @@ PROC IMPORT DATAFILE='C:\Users\pmendon\Downloads\pikachu.csv' DBMS=CSV OUT=ashli
 	GETNAMES=YES;
 RUN;
 
-proc means data=pikachu n nmiss;
+proc means data=ashline n nmiss;
 run;
 
 title 'Primary Analysis Missing';
