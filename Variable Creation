@@ -1,4 +1,4 @@
-PROC IMPORT DATAFILE='C:\Users\pmendon\Downloads\pikachu.csv DBMS=CSV OUT=ashline';
+PROC IMPORT DATAFILE='C:\Users\pmendon\Downloads\pikachu.csv' DBMS=CSV OUT=ashline;
 	GETNAMES=YES;
 RUN;
 
