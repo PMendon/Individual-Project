@@ -1,7 +1,9 @@
-/*Analysis*/
-/*dataset = ashline4*/ 
+/*End assumptions*/ 
 
-*using fagerstorm score as a categorical variable*/
+/*Analysis*/
+/*dataset = ashline5*/ 
+
+/*using fagerstorm score as a categorical variable*/
 PROC LOGISTIC data=ashline4 descending; 
 		class gender smoke_home_where FagerstromC medication 
 		referral numinterventions / param=ref; 
