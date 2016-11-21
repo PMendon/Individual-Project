@@ -1,0 +1,16 @@
+/*Analysis*/
+/*dataset = ashline4*/ 
+
+*using fagerstorm score as a categorical variable*/
+PROC LOGISTIC data=ashline4 descending; 
+		class gender smoke_home_where FagerstromC medication 
+		referral numinterventions / param=ref; 
+		model quit30 = clientage cc; 
+RUN; 
+	
+*using fagerstorm score as a continuous variable*/
+PROC LOGISTIC data=ashline4 descending; 
+		class gender smoke_home_where medication 
+		referral numinterventions / param=ref; 
+		model quit30 = clientage cc fagerstrom; 
+RUN; 
