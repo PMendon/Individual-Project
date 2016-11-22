@@ -1,6 +1,0 @@
-PROC LOGISTIC data=ashline4 descending; 
-		class gender FagerstromC medication 
-		referral numinterventions / param=ref; 
-		model quit30 = clientage cc FagerstromC*policy_household policy_household FagerstromC medication referral numinterventions gender; 
-RUN; 
-	
