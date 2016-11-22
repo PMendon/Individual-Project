@@ -1,0 +1,50 @@
+*****For quit30==0********
+insheet using "C:\Users\breevanderson\Downloads\ashline.csv", comma
+
+
+drop if quit30==1
+
+
+mi set wide
+
+
+mi register imputed clientage cc gender policy_household referral mental_treat numinterventions
+
+
+mi impute chained (reg)clientage cc (logit) gender policy_household referral mental_treat numinterventions, add(20)
+
+
+save quit30_0, replace
+
+
+clear
+
+
+****For quit30=1******
+
+
+insheet using "C:\Users\breevanderson\Downloads\ashline.csv", comma
+
+
+drop if quit30==0
+
+
+mi set wide
+
+
+mi register imputed clientage cc gender policy_household referral mental_treat numinterventions
+
+
+mi impute chained (reg)clientage cc (logit) gender policy_household referral mental_treat numinterventions, add(20)
+
+
+
+
+save quit30_1, replace
+
+
+clear
+
+
+use quit30_0, clear
+append using quit30
