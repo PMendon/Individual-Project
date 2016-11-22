@@ -6,9 +6,13 @@ PROC LOGISTIC data=ashline4 descending plots(only)=roc;
 		FagerstromC referral mental_treat numinterventions
 		FagerstromC*policy_household; 
 		ods select globaltests oddsratios roccurve;
-RUN; 
+RUN;
 
 /*Sensitivity Analysis 1: Missing Outcomes imputed*/ 
+PROC IMPORT DATAFILE='C:\Users\pmendon\Downloads\raichu.csv' DBMS=CSV OUT=ashline_mi;
+	GETNAMES=YES;
+RUN;
+
 PROC LOGISTIC data=ashline_mi desscending plots(only)=roc;
 		class gender policy_household FagerstromC referral
 		mental_treat numinterventions / param=ref ref=first; 
