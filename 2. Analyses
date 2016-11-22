@@ -21,3 +21,36 @@ PROC LOGISTIC data=ashline_mi desscending plots(only)=roc;
 		FagerstromC*policy_household; 
 		ods select globaltests oddsratios roccurve;
 RUN; 
+
+/*Sensitivity Analysis 2: Removing those that are treating their mental health*/
+DATA ashline6; 
+	set ashline5; 
+	if mental_treat=1 then delete; 
+RUN; 
+
+PROC MEANS data=ashline6; 
+	var clientage; 
+RUN; 
+
+PROC LOGISTIC data=ashline6 desscending plots(only)=roc;
+		class gender policy_household FagerstromC referral
+		mental_treat numinterventions / param=ref ref=first; 
+		model quit30 = clientage cc gender policy_household 
+		FagerstromC referral mental_treat numinterventions
+		FagerstromC*policy_household; 
+		ods select globaltests oddsratios roccurve;
+RUN; 
+
+/*Sensitivity Analysis 3: Combining the two above sensitivity analysis*/ 
+PROC IMPORT DATAFILE='C:\Users\pmendon\Downloads\pichu.csv' DBMS=CSV OUT=ashline_mi2;
+	GETNAMES=YES;
+RUN;
+
+PROC LOGISTIC data=ashline_mi2 desscending plots(only)=roc;
+		class gender policy_household FagerstromC referral
+		mental_treat numinterventions / param=ref ref=first; 
+		model quit30 = clientage cc gender policy_household 
+		FagerstromC referral mental_treat numinterventions
+		FagerstromC*policy_household; 
+		ods select globaltests oddsratios roccurve;
+RUN; 
