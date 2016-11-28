@@ -25,6 +25,7 @@ ARRAY disease {6} asthma hypertension cancer copd diabetes heartdisease;
 DO i=1 to 6; 
 	if disease{i} = 1 THEN CC=CC+1; 
 END; 
+drop i; 
 RUN;  
 
 /*create NRT stratification variable*/
@@ -57,6 +58,7 @@ set ashline3;
 	if fagerstrom >= 3 and fagerstrom <=4 then FagerstromC= 2; 
 	if fagerstrom >= 5 and fagerstrom <=7 then FagerstromC= 3;
 	if fagerstrom >8 then FagerstromC= 4;
+	if fagerstrom = '.' then FagerstromC = '.'; 
 run;
 
 DATA ashline5; 
@@ -64,8 +66,9 @@ DATA ashline5;
 		if clientage=0 then clientage='.'; 
 RUN; 
 
-PROC MEANS data=ashline5; 
-	var clientage; 
+DATA ashline6; 
+	set ashline5; 
+		if policy_household = 2 then policy_household = 1; 
 RUN; 
 
 /*Variable list
