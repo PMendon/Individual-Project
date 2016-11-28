@@ -1,0 +1,30 @@
+
+DATA ashline7; 
+	set ashline6; 
+		if numinterventions = '.' then delete; 
+RUN;
+
+PROC FORMAT; 
+	value gender 0='male' 1='female'; 
+	value policy_household 0='no smoking' 1='smoking'; 
+	value referral 0='active' 1='passive'; 
+	value numinterventions 0='no NRT and coaching' 1='NRT, no coaching' 2='nrt and some coaching' 3='nrt and lots of coaching' 4='no nrt and some coaching' 5='pure coaching';
+RUN; 
+
+PROC SORT data=ashline7 out=ashline8; 
+	by numinterventions;
+RUN; 
+
+PROC LOGISTIC data=ashline8 descending plots(only)=roc;
+		class gender policy_household referral numinterventions / param=ref ref=first; 
+		model quit30 = clientage cc gender referral numinterventions Fagerstrom|policy_household; 
+		title 'Initial Analysis Y';  
+		oddsratio gender; 
+		oddsratio clientage; 
+		oddsratio cc; 
+		oddsratio referral; 
+		oddsratio numinterventions; 
+		oddsratio Fagerstrom; 
+		oddsratio policy_household; 
+		/*ods select globaltests oddsratios roccurve;*/
+RUN;
