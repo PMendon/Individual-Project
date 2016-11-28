@@ -7,7 +7,7 @@ run;
 
 title 'Primary Analysis Missing';
 proc means data=ashline n nmiss;
-var gender clientage fagerstrom referral policy_household ;
+var gender clientage fagerstrom referral q10 ;
 run;
 
 *asthma
@@ -66,15 +66,18 @@ DATA ashline5;
 		if clientage=0 then clientage='.'; 
 RUN; 
 
-DATA ashline6; 
-	set ashline5; 
-		if policy_household = 2 then policy_household = 1; 
-RUN; 
+data ashline6;
+	set ashline5;
+	household=.;
+	if q10= 0 then household=0;
+	if q10= 1 then household=1;
+	if q10= 99 then household=1;
+	run;
 
 /*Variable list
 gender
 clientage
-smoke_home_where - do others smoke at home
+household - do others smoke at home (no=0, yes=1)
 fagerstromC - nicotine dependence category
 cc - number of comorbidities
 medication - NRT use
