@@ -133,7 +133,7 @@ RUN;
 /*Now we use FCS because our outcome is binary*/ 
 
 /*I. Imputation Phase*/
-/*Recreate the dataset without dropping all missing quit30*/
+/*Recreate the dataset without dropping all missing outcome variables*/
 DATA ashline2;
 	set ashline; 
 		CC=0; 
@@ -158,10 +158,21 @@ DATA ashline4;
 RUN;
  
 PROC MI data=ashline4 nimpute=20 out=ashline_mi; 
-	class gender household referral medication quit30;
-	var quit30 gender household referral numinterventions fagerstrom cc clientage;
-	fcs logistic(quit30= hispanic cigs_day_range  policy_household clientage);
-	fcs logistic(household= policy_household smoke_home_where);
-	fcs logistic(medication = policy_household policy_work cigs_day_range smoke_home_where household);
-	fcs discrim(fagerstrom = policy_household policy_work cigs_day_range smoke_home_where household); 
+	class /*dichotomous or categorical variables you will impute with*/;
+	fcs reg (/*continuous variables you want to impute*/) logistic (/*categorical variables you want to impute*/);
+	var /*all variables in final model in order of descending #missing values*/ ; 
 RUN; 
+
+PROC GENMOD data=ashline_mi; 
+	class /*categorical variables*/; 
+	model /*final model*/ / dist=normal; 
+	by _imputation_; 
+	ods output ParameterEstimates=gm_fcs; 
+RUN; 
+
+PROC MIANALYZE params(classvar=level)=gm=fcs; 
+	class /*categorical variables*/; 
+	MODELEFFECTS INTERCEPT 
+	PROG; 
+RUN; 
+
