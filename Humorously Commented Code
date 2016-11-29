@@ -94,7 +94,7 @@ RUN;
 /*Let's put that on the back burner for now since we have to include these variables since this is what Dr. Nair wanted*/ 
 PROC LOGISTIC data=ashline_cc5 descending plots(only)=roc;
 		class gender household referral numinterventions / param=ref ref=first; 
-		model quit30 = gender household referral numinterventions fagerstrom cc clientage; 
+		model quit30 = gender referral numinterventions cc clientage fagerstrom household fagerstrom*household ; 
 		ods select globaltests oddsratios roccurve;
 RUN;
 /*And there we have our initial analysis*/ 
@@ -109,7 +109,7 @@ RUN;
 /*Now let's run our model*/ 
 PROC LOGISTIC data=ashline_notrt descending plots(only)=roc;
 		class gender household referral numinterventions / param=ref ref=first; 
-		model quit30 = gender household referral numinterventions fagerstrom cc clientage; 
+		model quit30 = gender referral numinterventions cc clientage fagerstrom household; 
 		ods select globaltests oddsratios roccurve;
 RUN;
 /*NOTE: remove the line that starts with ods select in order to get the estimate values for each of the above models*/ 
@@ -174,6 +174,9 @@ DATA ashline5;
 		if medication=0 and coaching_calls_beforeFU >=5 then numinterventions=4;
 		if medication=1 and coaching_calls_beforeFU >=5 then numinterventions=5;
 RUN;
+
+PROC EXPORT data=ashline5 outfile='C:\Users\pmendon\Downloads\ashline.csv' dbms=csv replace; 
+RUN; 
 
 PROC MI data=ashline5 nimpute=20 out=ashline_mi seed=157345; 
 	class hispanic kids policy_household policy_work smoke_home_where gender household referral quit30 numinterventions;
