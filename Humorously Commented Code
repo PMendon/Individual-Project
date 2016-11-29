@@ -130,3 +130,38 @@ RUN;
 /*q10 = policy_household smoke_home_where*/ 
 /*medication = policy_household policy_work cigs_day_range smoke_home_where q10*/ 
 
+/*Now we use FCS because our outcome is binary*/ 
+
+/*I. Imputation Phase*/
+/*Recreate the dataset without dropping all missing quit30*/
+DATA ashline2;
+	set ashline; 
+		CC=0; 
+			ARRAY disease {6} asthma hypertension cancer copd diabetes heartdisease; 
+			DO i=1 to 6; 
+				if disease{i} = 1 THEN CC=CC+1; 
+			END; 
+	drop i; 
+RUN;  
+
+DATA ashline3;
+	set ashline2;
+		household=.;
+		if q10= 0 then household=0;
+		if q10= 1 then household=1;
+		if q10= 99 then household=1;
+RUN;
+
+DATA ashline4; 
+	set ashline3; 
+		if clientage=0 then clientage='.'; 
+RUN;
+ 
+PROC MI data=ashline4 nimpute=20 out=ashline_mi; 
+	class gender household referral medication quit30;
+	var quit30 gender household referral numinterventions fagerstrom cc clientage;
+	fcs logistic(quit30= hispanic cigs_day_range  policy_household clientage);
+	fcs logistic(household= policy_household smoke_home_where);
+	fcs logistic(medication = policy_household policy_work cigs_day_range smoke_home_where household);
+	fcs discrim(fagerstrom = policy_household policy_work cigs_day_range smoke_home_where household); 
+RUN; 
