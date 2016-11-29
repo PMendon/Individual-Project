@@ -114,3 +114,19 @@ PROC LOGISTIC data=ashline_notrt descending plots(only)=roc;
 RUN;
 /*NOTE: remove the line that starts with ods select in order to get the estimate values for each of the above models*/ 
 
+/*PART 3: SENSITIVITY ANALYSIS*/ 
+/*And now we have to impute some stuff. There are four places to impute data: quit30, medication, fagerstrom, q10*/ 
+/*Then we need to recreate the NRT+Coaching Variable and household (q10's binary forme)*/ 
+
+/*A.) Examine missing data patterns*/ 
+PROC MI data=ashline nimpute=0; 
+	var quit30 medication fagerstrom q10; 
+ods select misspattern; 
+RUN; 
+/*so... from here... what are our auxilliary variables?*/ 
+/*using previous literature, we can deduce the following smoking cessation predictors to use in an imputation model for quit30*/
+/*quit30 =  hispanic cigs_day_range policy_household clientage*/ 
+/*fagerstrom = policy_household policy_work cigs_day_range smoke_home_where q10*/ 
+/*q10 = policy_household smoke_home_where*/ 
+/*medication = policy_household policy_work cigs_day_range smoke_home_where q10*/ 
+
