@@ -58,13 +58,12 @@ RUN;
 /*PART 1: INITIAL ANALYSIS*/ 
 /*For the initial analysis we need to create one more variable, NRT+Coaching*/
 /*we have tons of nrt values missing but no coaching call values missing... 22%*/ 
-/*here is what we do... we merge the '.' values for NRT with the 0 values*/ 
+/*here is what we do... we create a new segment where NRT use is just unknown, but coaching call session is known*/ 
 DATA ashline_cc5;
 	set ashline_cc4;
 		NumInterventions='.';
 		if medication=0 and coaching_Calls_beforeFU =0 then numinterventions =0;
 		if medication=1 and coaching_Calls_beforeFU =0 then numinterventions =1;
-
 
 		if medication=0 and coaching_calls_beforeFU =>1 and coaching_calls_beforeFU <=4 then numinterventions=2;
 		if medication=1 and coaching_calls_beforeFU =>1 and coaching_calls_beforeFU <=4 then numinterventions=3;
