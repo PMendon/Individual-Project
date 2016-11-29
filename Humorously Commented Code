@@ -1,0 +1,117 @@
+PROC IMPORT DATAFILE='C:\Users\pmendon\Downloads\pikachu.csv' DBMS=CSV OUT=ashline;
+	GETNAMES=YES;
+RUN;
+
+/*we care about 7 variables: gender, age, nicotine dependence, comorbid conditions, referral type, smokers in household, and NRT+Coaching*/ 
+/*of those, gender/age/nicotine dependence/referral/smokers in household are raw*/ 
+/*we create the remaining two, NRT+coaching and comorbid conditions*/ 
+/*we can still see the missing data in NRT+coaching's component variables though*/ 
+
+PROC MEANS data=ashline n nmiss;
+	var gender clientage fagerstrom referral q10 medication coaching_calls_beforeFU asthma hypertension cancer copd diabetes heartdisease quit30;
+RUN;
+
+/*we don't get any ID variables (even though they were on the dataset), so a limitation of this study is people re-enrolling*/ 
+/*we also know that some people drop out of the study*/ 
+
+/*first let's get rid of all the people who dropped out since, 'smoking status is unavailable'*/ 
+DATA ashline_cc; 
+	set ashline; 
+		if quit30 = '.' then delete; 
+RUN; 
+
+/*Our new population size is 7065*/ 
+
+PROC MEANS data=ashline_cc n nmiss;
+	var gender clientage fagerstrom referral q10 medication coaching_calls_beforeFU asthma hypertension cancer copd diabetes heartdisease quit30;
+RUN;
+
+/*We can ignore the missing values for comorbid conditions since they are all less than 3% of the total*/ 
+/*We cannot do the same for the NRT+Coaching Session Variable since we may have to impute missing data for the sensitivity analysis.*/ 
+/*Therefore, we will have the comorbid condition variable creation code in the overaching code for the set*/ 
+DATA ashline_cc2;
+	set ashline_cc; 
+		CC=0; 
+			ARRAY disease {6} asthma hypertension cancer copd diabetes heartdisease; 
+			DO i=1 to 6; 
+				if disease{i} = 1 THEN CC=CC+1; 
+			END; 
+	drop i; 
+RUN;  
+
+/*also, q10. It has three values, but we only need it to tell us if people smoke at home or not so...*/ 
+DATA ashline_cc3;
+	set ashline_cc2;
+		household=.;
+		if q10= 0 then household=0;
+		if q10= 1 then household=1;
+		if q10= 99 then household=1;
+RUN;
+
+/*one last thing... some clientages have been set to 0, we need to set them to '.' since 0 is not valid age*/
+/*it's no big deal since the percent missing is still less than 1%*/  
+DATA ashline_cc4; 
+	set ashline_cc3; 
+		if clientage=0 then clientage='.'; 
+RUN; 
+
+/*PART 1: INITIAL ANALYSIS*/ 
+/*For the initial analysis we need to create one more variable, NRT+Coaching*/
+/*we have tons of nrt values missing but no coaching call values missing... 22%*/ 
+/*here is what we do... we merge the '.' values for NRT with the 0 values*/ 
+DATA ashline_cc5;
+	set ashline_cc4;
+		NumInterventions='.';
+		if medication=0 and coaching_Calls_beforeFU =0 then numinterventions =0;
+		if medication=1 and coaching_Calls_beforeFU =0 then numinterventions =1;
+
+
+		if medication=0 and coaching_calls_beforeFU =>1 and coaching_calls_beforeFU <=4 then numinterventions=2;
+		if medication=1 and coaching_calls_beforeFU =>1 and coaching_calls_beforeFU <=4 then numinterventions=3;
+	
+		if medication=0 and coaching_calls_beforeFU >=5 then numinterventions=4;
+		if medication=1 and coaching_calls_beforeFU >=5 then numinterventions=5;
+
+		if medication='.' and coaching_calls_beforeFU =0 then numinterventions=6; 
+		if medication='.' and coaching_calls_beforeFU >=1 and coaching_calls_beforeFU <=5 then numinterventions=7;
+		if medication='.' and coaching_calls_beforefu >=5 then numinterventions=8;
+RUN;
+
+PROC MEANS data=ashline_cc5 n nmiss;
+	class numinterventions;
+RUN;
+
+/*After all these modifications and changes, what does our missng data percentage look like now?*/ 
+PROC MEANS data=ashline_cc5 n nmiss;
+	var gender clientage fagerstrom referral q10 cc smoke_home_where quit30;
+RUN;
+/*After dropping all obs which have no outcome, we still have the issue of fagerstrom, q10/smoke_home_where, and numinterventions being over 20% missing*/
+/*We will eventually have to impute them since otherwise, our analysis may be biased... or lose power*/ 
+
+/*Anyway... let's start our actual model building*/ 
+/*Class vars = gender, numinterventions, referral, q10 (fewer missing values than smoke_home_where)*/ 
+/*continuous vars = fagerstrom, cc, clientage*/ 
+/*ahhh wait... we need to assess the assumptions of logistic regression for the continuous variables*/ 
+/*Let's put that on the back burner for now since we have to include these variables since this is what Dr. Nair wanted*/ 
+PROC LOGISTIC data=ashline_cc5 descending plots(only)=roc;
+		class gender household referral numinterventions / param=ref ref=first; 
+		model quit30 = gender household referral numinterventions fagerstrom cc clientage; 
+		ods select globaltests oddsratios roccurve;
+RUN;
+/*And there we have our initial analysis*/ 
+
+/*PART 2: SECONDARY OBJECTIVE*/ 
+/*We wanted to assess our model when we remove those who are treating their mental health conditions*/ 
+DATA ashline_notrt; 
+	set ashline_cc5; 
+	if mental_treat=1 then delete; 
+RUN; 
+/*new n=1535*/ 
+/*Now let's run our model*/ 
+PROC LOGISTIC data=ashline_notrt descending plots(only)=roc;
+		class gender household referral numinterventions / param=ref ref=first; 
+		model quit30 = gender household referral numinterventions fagerstrom cc clientage; 
+		ods select globaltests oddsratios roccurve;
+RUN;
+/*NOTE: remove the line that starts with ods select in order to get the estimate values for each of the above models*/ 
+
