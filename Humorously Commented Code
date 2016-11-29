@@ -119,7 +119,7 @@ RUN;
 /*Then we need to recreate the NRT+Coaching Variable and household (q10's binary forme)*/ 
 
 /*A.) Examine missing data patterns*/ 
-PROC MI data=ashline_cc5 nimpute=0; 
+PROC MI data=ashline5 nimpute=0; 
 	var quit30 medication gender household referral numinterventions fagerstrom cc clientage q10; 
 ods select misspattern; 
 RUN; 
@@ -156,8 +156,25 @@ DATA ashline4;
 	set ashline3; 
 		if clientage=0 then clientage='.'; 
 RUN;
- 
-PROC MI data=ashline4 nimpute=20 out=ashline_mi; 
+
+DATA ashline5;
+	set ashline4;
+		NumInterventions='.';
+		if medication=0 and coaching_Calls_beforeFU =0 then numinterventions =0;
+		if medication=1 and coaching_Calls_beforeFU =0 then numinterventions =1;
+
+		if medication=0 and coaching_calls_beforeFU =>1 and coaching_calls_beforeFU <=4 then numinterventions=2;
+		if medication=1 and coaching_calls_beforeFU =>1 and coaching_calls_beforeFU <=4 then numinterventions=3;
+	
+		if medication=0 and coaching_calls_beforeFU >=5 then numinterventions=4;
+		if medication=1 and coaching_calls_beforeFU >=5 then numinterventions=5;
+
+		if medication='.' and coaching_calls_beforeFU =0 then numinterventions=6; 
+		if medication='.' and coaching_calls_beforeFU >=1 and coaching_calls_beforeFU <=5 then numinterventions=7;
+		if medication='.' and coaching_calls_beforefu >=5 then numinterventions=8;
+RUN;
+
+PROC MI data=ashline5 nimpute=20 out=ashline_mi; 
 	class hispanic policy_household policy_work smoke_home_where q_10 gender household referral medication quit30;
 	fcs reg (fagerstrom) logistic (medication quit30 q10);
 	var /*all variables in final model in order of descending #missing values*/ ; 
