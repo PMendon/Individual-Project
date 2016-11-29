@@ -120,9 +120,14 @@ RUN;
 
 /*A.) Examine missing data patterns*/ 
 PROC MI data=ashline5 nimpute=0; 
-	var quit30 medication gender household referral numinterventions fagerstrom cc clientage q10; 
+	var quit30 medication gender household referral fagerstrom cc clientage q10; 
 ods select misspattern; 
 RUN; 
+
+PROC MEANS data=ashline5 n nmiss; 
+	var quit30 medication gender household referral fagerstrom cc clientage q10 kids cigs_day_range smoke_home_where policy_work hispanic policy_household; 
+RUN; 
+
 /*so... from here... what are our auxilliary variables?*/ 
 /*using previous literature, we can deduce the following smoking cessation predictors to use in an imputation model for quit30*/
 /*quit30 =  hispanic cigs_day_range policy_household clientage*/ 
@@ -168,28 +173,36 @@ DATA ashline5;
 	
 		if medication=0 and coaching_calls_beforeFU >=5 then numinterventions=4;
 		if medication=1 and coaching_calls_beforeFU >=5 then numinterventions=5;
-
-		if medication='.' and coaching_calls_beforeFU =0 then numinterventions=6; 
-		if medication='.' and coaching_calls_beforeFU >=1 and coaching_calls_beforeFU <=5 then numinterventions=7;
-		if medication='.' and coaching_calls_beforefu >=5 then numinterventions=8;
 RUN;
 
-PROC MI data=ashline5 nimpute=20 out=ashline_mi; 
-	class hispanic policy_household policy_work smoke_home_where q_10 gender household referral medication quit30;
-	fcs reg (fagerstrom) logistic (medication quit30 q10);
-	var /*all variables in final model in order of descending #missing values*/ ; 
+PROC MI data=ashline5 nimpute=20 out=ashline_mi seed=157345; 
+	class hispanic kids policy_household policy_work smoke_home_where gender household referral quit30 numinterventions;
+	fcs reg (fagerstrom = policy_household policy_work cigs_day_range smoke_home_where); 
+	fcs logistic (numinterventions= fagerstrom);
+	fcs logistic (quit30 = hispanic cigs_day_range policy_household clientage); 
+	fcs logistic (household = policy_household kids); 
+	var household numinterventions quit30 cigs_day_range fagerstrom hispanic smoke_home_where policy_work kids policy_household clientage gender cc referral; 
 RUN; 
 
-PROC GENMOD data=ashline_mi; 
-	class /*categorical variables*/; 
-	model /*final model*/ / dist=normal; 
+PROC GLM data=ashline_mi; 
+	model quit30 = gender household referral numinterventions fagerstrom cc clientage; 
+	by _imputation_; 
+	ods output ParameterEstimates=ests; 
+RUN; 
+
+PROC MIANALYZE parms=ests; 
+	modeleffects gender household referral numinterventions fagerstrom cc clientage; 
+RUN; 
+
+/*PROC GENMOD data=ashline_mi; 
+	class (categorical variables); 
+	model (final model) / dist=normal; 
 	by _imputation_; 
 	ods output ParameterEstimates=gm_fcs; 
-RUN; 
+RUN;*/
 
-PROC MIANALYZE params(classvar=level)=gm=fcs; 
-	class /*categorical variables*/; 
+/*PROC MIANALYZE params(classvar=level)=gm=fcs; 
+	class (categorical variables); 
 	MODELEFFECTS INTERCEPT 
 	PROG; 
-RUN; 
-
+RUN; */
