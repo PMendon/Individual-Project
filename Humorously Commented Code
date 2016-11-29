@@ -186,18 +186,27 @@ PROC MI data=ashline5 nimpute=20 out=ashline_mi seed=157345;
 	fcs discrim (policy_work /classeffects=include); 
 	fcs discrim (kids /classeffects=include); 
 	fcs discrim (policy_household /classeffects=include);  
+	fcs discrim (gender /classeffects=include);
+	fcs discrim (referral /classeffects=include);
 	var household numinterventions quit30 cigs_day_range fagerstrom hispanic smoke_home_where policy_work kids policy_household clientage gender cc referral; 
 RUN; 
 
 PROC GLM data=ashline_mi; 
 	class gender referral numinterventions;
-	model quit30 = gender household referral numinterventions fagerstrom cc clientage; 
+	model quit30 = gender household referral numinterventions fagerstrom cc clientage /solution; 
 	by _imputation_; 
-	ods output ParameterEstimates=ests; 
+	ods output ParameterEstimates = ests; 
 RUN; 
 
-PROC MIANALYZE parms=ests; 
+PROC MIANALYZE parms= ests; 
 	modeleffects gender household referral numinterventions fagerstrom cc clientage; 
+RUN; 
+
+PROC SURVEYLOGISTIC data=ashline_mi; 
+	by _imputation_; 
+	class class gender referral numinterventions (ref=0)/param=ref; 
+	model quit30 (event='1') = gender household referral numinterventions fagerstrom cc clientage; 
+	ods output parameterestimates=ORs;
 RUN; 
 
 /*PROC GENMOD data=ashline_mi; 
