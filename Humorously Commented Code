@@ -181,10 +181,16 @@ PROC MI data=ashline5 nimpute=20 out=ashline_mi seed=157345;
 	fcs logistic (numinterventions= fagerstrom);
 	fcs logistic (quit30 = hispanic cigs_day_range policy_household clientage); 
 	fcs logistic (household = policy_household kids); 
+	fcs discrim (hispanic /classeffects=include);
+	fcs discrim (smoke_home_where /classeffects=include); 
+	fcs discrim (policy_work /classeffects=include); 
+	fcs discrim (kids /classeffects=include); 
+	fcs discrim (policy_household /classeffects=include);  
 	var household numinterventions quit30 cigs_day_range fagerstrom hispanic smoke_home_where policy_work kids policy_household clientage gender cc referral; 
 RUN; 
 
 PROC GLM data=ashline_mi; 
+	class gender referral numinterventions;
 	model quit30 = gender household referral numinterventions fagerstrom cc clientage; 
 	by _imputation_; 
 	ods output ParameterEstimates=ests; 
