@@ -8,10 +8,10 @@ drop if quit30==1
 mi set wide
 
 
-mi register imputed clientage cc gender policy_household referral mental_treat numinterventions
+mi register imputed clientage cc gender household referral mental_treat numinterventions
 
 
-mi impute chained (reg)clientage cc (logit) gender policy_household referral mental_treat numinterventions, add(20)
+mi impute chained (reg)clientage cc (logit) gender household referral mental_treat numinterventions, add(20)
 
 
 save quit30_0, replace
@@ -32,10 +32,10 @@ drop if quit30==0
 mi set wide
 
 
-mi register imputed clientage cc gender policy_household referral mental_treat numinterventions
+mi register imputed clientage cc gender household referral mental_treat numinterventions
 
 
-mi impute chained (reg)clientage cc (logit) gender policy_household referral mental_treat numinterventions, add(20)
+mi impute chained (reg)clientage cc (logit) gender household referral mental_treat numinterventions, add(20)
 
 
 
@@ -47,4 +47,4 @@ clear
 
 
 use quit30_0, clear
-append using quit30
+append using quit30_1
