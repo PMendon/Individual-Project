@@ -1,0 +1,111 @@
+
+proc import datafile='D:\Users\lilizhou\Documents\lili\576c\Project_3_MI_Including_QOL_2016_11_14.csv'
+dbms=csv out=help_imputed replace;
+run;
+
+data help_imputed_short;
+	set help_imputed(keep=patid trtment _1_fact_t21 -- _20_fact_t22);
+run;
+
+%macro yr(yr=);
+data help_impute_&yr.;
+	set help_imputed_short(keep=patid trtment _&yr._fact_t21 - _&yr._fact_t24);
+	_imputation_=&yr.;
+	rename _&yr._fact_t21 =fact_t21 _&yr._fact_t22=fact_t22 
+		   _&yr._fact_t23 =fact_t23 _&yr._fact_t24=fact_t24;
+run;
+%mend;
+%yr(yr=1);
+%yr(yr=2);
+%yr(yr=3);
+%yr(yr=4);
+%yr(yr=5);
+%yr(yr=6);
+%yr(yr=7);
+%yr(yr=8);
+%yr(yr=9);
+%yr(yr=10);
+%yr(yr=11);
+%yr(yr=12);
+%yr(yr=13);
+%yr(yr=14);
+%yr(yr=15);
+%yr(yr=16);
+%yr(yr=17);
+%yr(yr=18);
+%yr(yr=19);
+%yr(yr=20);
+
+data help_combined;
+	set help_impute_1 - help_impute_20;
+run;
+
+data help_combined;
+	set help_combined;
+	fact_t2=fact_t21;
+	funo=1;
+	output;
+	fact_t2=fact_t22;
+	funo=2;
+	output;
+	fact_t2=fact_t23;
+	funo=3;
+	output;
+	fact_t2=fact_t24;
+	funo=4;
+	output;
+	drop fact_t21 - fact_t24;
+by _imputation_;
+run;
+
+proc mixed data=help_combined;
+class funo  trtment;
+model fact_t2=funo trtment funo*trtment/ solution;
+random int /  sub=patid type=un;
+lsmeans trtment*funo/cl pdiff;
+estimate 'trt, time 2' int 1 funo 0 1 0 0 trtment 0 1 funo*trtment 0 0 0 1 0 0 0 0 ; 
+estimate 'ctl, time 2' int 1 funo 0 1 0 0 trtment 1 0 funo*trtment 0 0 1 0 0 0 0 0 ; 
+estimate 'difference at time 2' trtment -1 1 funo*trtment 0 0 -1 1 0 0 0 0 / e cl;
+estimate 'trt, time3' int 1 funo  0 0 1 0 trtment 0 1 funo*trtment 0 0 0 0 0 1 0 0 ; 
+estimate 'ctl, time3' int 1 funo  0 0 1 0 trtment 1 0 funo*trtment 0 0 0 0 1 0 0 0 ; 
+estimate 'difference at time 3' trtment -1 1 funo*trtment 0 0 0 0 -1 1 0 0 / e cl;
+estimate 'trt, time4' int 1 funo 0 0 0 1 trtment 0 1 funo*trtment 0 0 0 0 0 0 0 1 ;
+estimate 'ctl, time4' int 1 funo 0 0 0 1 trtment 1 0 funo*trtment 0 0 0 0 0 0 1 0 ;
+estimate 'difference at time 4' trtment -1 1 funo*trtment 0 0 0 0 0 0 -1 1 / e cl;
+estimate 'average difference of post-baseline between two groups ' trtment -3 3 funo*trtment 0 0 -1 1 -1 1 -1 1 /divisor=3 ;
+by _imputation_;
+ods output solutionF=mixparms estimates=mixestimates;
+run;
+
+data mixestimates;
+	set mixestimates;
+	rename effect=parameter;
+run;
+
+data mixestimates_1;
+	set mixestimates;
+	format effect $8.;
+	if parameter='trt, time 2' then effect='treat1';
+	if parameter='ctl, time 2' then effect='treat2';
+	if parameter='difference at time 2' then effect='treat3';
+	if parameter='trt, time3' then effect='treat4';
+	if parameter='ctl, time3' then effect='treat5';
+	if parameter='difference at time 3' then effect='treat6';
+	if parameter='trt, time4' then effect='treat7';
+	if parameter='ctl, time4' then effect='treat8';
+	if parameter='difference at time 4' then effect='treat9';
+	if parameter='average difference of post-baseline between two groups' then effect='treat11';
+run;
+
+data mixestimates_1;
+	set mixestimates_1;
+	drop parameter;
+	rename effect=parameter;
+run;
+
+ods pdf file='D:\Users\lilizhou\Documents\lili\576c\imputation_model.pdf';
+proc mianalyze parms=mixestimates_1;
+modeleffects  treat1 treat2 treat3 treat4 treat5 treat6 treat7 treat8 treat9 treat11;
+run;
+ods pdf close;
+
