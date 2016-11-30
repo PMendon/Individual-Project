@@ -2,24 +2,65 @@ PROC IMPORT DATAFILE='C:\Users\TEMP.CATNET.000\Downloads\ashline.csv' DBMS=CSV O
 	GETNAMES=YES;
 RUN;
 
-/*PROC IMPORT DATAFILE='C:\Users\TEMP.CATNET.000\Downloads\ashline_mi.csv' DBMS=csv OUT=ashline_mi; 
-	GETNAMES=yes; 
-RUN; */
-
-PROC MI data=ashline out=ashline_miX nimpute=10 seed=327253001; 
-	class gender fagerstrom household numinterventions referral cc; 
-	FCS regression(clientage) logistic(household fagerstrom numinterventions gender cc referral); 
-	var quit30 clientage gender fagerstrom household numinterventions cc referral; 
+PROC MI data=ashline out=ashline_miX nimpute=5 seed=325; 
+	class gender household numinterventions referral cc; 
+	FCS regression(clientage fagerstrom) logistic(household numinterventions gender cc referral); 
+	var /*least -> most*/ referral cc gender clientage fagerstrom quit30 household numinterventions; 
 RUN;  
 
-PROC LOGISTIC data=ashline_miX; 
-	class gender household numinterventions referral;
-	model quit30=clientage gender fagerstrom household numinterventions cc referral; 
+
+PROC LOGISTIC data=ashline_miX outest=ashlinelog covout; 
+	class quit30 numinterventions / param=ref;
+	model quit30 (event='1')=clientage gender fagerstrom household numinterventions cc referral; 
 	by _imputation_; 
- ods output ParameterEstimates=lgsparms; 
+ ods output ParameterEstimates=lgsparms ODDSRATIOS=gm_params;
 RUN; 
 QUIT; 
 
 proc mianalyze parms=lgsparms;
 	modeleffects clientage gender fagerstrom household numinterventions cc referral;
 run;	
+
+
+
+
+
+
+PROC GENMOD data=ashline_miX descending; 
+	class gender household numinterventions referral/ ref=first; 
+	model quit30=clientage gender fagerstrom household numinterventions cc referral; 
+	by _imputation_; 
+	ods output ParameterEstimates=gm_fcs; 
+RUN; 
+
+PROC MIANALYZE parms(classvar=level)=gm_fcs; 
+	class gender household numinterventions referral; 
+	modeleffects INTERCEPT clientage gender fagerstrom household numinterventions cc referral; 
+RUN; 
+
+
+
+
+
+
+data gm_fcs2;
+set gm_fcs;
+if df gt 0;
+or=exp(estimate);
+low_or=exp(estimate-1.96*stderr);
+hi_or=exp(estimate+1.96*stderr);
+run;
+
+proc print data=gm_fcs2 label noobs;
+title2 'Estimated odds ratios and 95% CIs';
+var level1 estimate stderr or low_or hi_or;
+format estimate stderr or low_or hi_or 6.3;
+label
+level1='Level'
+estimate='Beta estimate'
+stderr='Standard Error'
+or='Estimated OR'
+low_or='Lower limit 95% CI'
+hi_or='Upper limit 95% CI'
+;
+run;
