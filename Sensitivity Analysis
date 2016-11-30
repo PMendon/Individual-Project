@@ -1,0 +1,25 @@
+PROC IMPORT DATAFILE='C:\Users\TEMP.CATNET.000\Downloads\ashline.csv' DBMS=CSV OUT=ashline;
+	GETNAMES=YES;
+RUN;
+
+/*PROC IMPORT DATAFILE='C:\Users\TEMP.CATNET.000\Downloads\ashline_mi.csv' DBMS=csv OUT=ashline_mi; 
+	GETNAMES=yes; 
+RUN; */
+
+PROC MI data=ashline out=ashline_miX nimpute=10 seed=327253001; 
+	class gender fagerstrom household numinterventions referral cc; 
+	FCS regression(clientage) logistic(household fagerstrom numinterventions gender cc referral); 
+	var quit30 clientage gender fagerstrom household numinterventions cc referral; 
+RUN;  
+
+PROC LOGISTIC data=ashline_miX; 
+	class gender household numinterventions referral;
+	model quit30=clientage gender fagerstrom household numinterventions cc referral; 
+	by _imputation_; 
+ ods output ParameterEstimates=lgsparms; 
+RUN; 
+QUIT; 
+
+proc mianalyze parms=lgsparms;
+	modeleffects clientage gender fagerstrom household numinterventions cc referral;
+run;	
