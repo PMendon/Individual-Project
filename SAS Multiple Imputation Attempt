@@ -1,0 +1,36 @@
+
+PROC MI data=ashlineprimary out=ashline_mi nimpute=5 seed=325; 
+	class gender household numinterventions referral cc; 
+	FCS regression(clientage fagerstrom) logistic(household numinterventions gender cc referral); 
+	var /*least -> most*/ referral cc gender clientage fagerstrom quit30 household numinterventions; 
+RUN;  
+
+PROC LOGISTIC data=ashline_mi outest=ashlineimpute covout; 
+	class quit30 numinterventions / param=ref;
+	model quit30 (event='0')=clientage gender fagerstrom household numinterventions cc referral; 
+	by _imputation_; 
+ ods output ParameterEstimates=ests ODDSRATIOS=ors;
+RUN; 
+QUIT; 
+
+proc mianalyze parms=lgsparms;
+	modeleffects clientage gender fagerstrom household numinterventions cc referral;
+run;	
+
+/*End Analysis*/ 
+
+/*INTERNAL USE ONLY: IF THE ABOVE FAILS, ATTEMPT A GENMOD AND USE ESTIMATES INSTEAD OF THE ODDS RATIOS*/ 
+PROC GENMOD data=ashline_mi; 
+	class gender household numinterventions referral/ ref=first; 
+	model quit30 (event='0')=clientage gender fagerstrom household numinterventions cc referral; 
+	by _imputation_; 
+	ods output ParameterEstimates=gm_fcs; 
+RUN; 
+
+PROC MIANALYZE parms(classvar=level)=gm_fcs; 
+	class gender household numinterventions referral; 
+	modeleffects INTERCEPT clientage gender fagerstrom household numinterventions cc referral; 
+RUN; 
+/*END INTERNAL USE*/ 
+
+
