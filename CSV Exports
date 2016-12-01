@@ -1,6 +1,0 @@
-/*Exports to CSV*/ 
-PROC EXPORT data=ashline6 outfile= 'c:\users\pmendon\desktop\breeisbest.csv' dbms=csv replace;
-RUN; 
-
-PROC EXPORT data=ashline5 outfile= 'c:\users\pmendon\desktop\ashline.csv' dbms=csv replace;
-RUN; 
