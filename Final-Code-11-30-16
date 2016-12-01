@@ -141,5 +141,7 @@ RUN;
 
 /*Sensitivity Analysis 3: Impute Missng Data using Multiple Imputation by Chained Equations (MICE)*/ 
 /*At this point, we exported dataset from SAS to STATA and performed the imputation in STATA since it failed to converge in SAS*/
+PROC EXPORT data=ashline5 outfile= 'C:\Users\pmendon\Downloads\ashline.csv' dbms=csv replace;
+RUN; 
 
 
