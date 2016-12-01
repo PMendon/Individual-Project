@@ -1,0 +1,24 @@
+/*Appendix 1: Testing for Linearity in the Logit for Continuous Variables*/ 
+PROC LOESS data=ashlinePrimary PLOTS=FIT PLOTS(MAXPOINTS=NONE); 
+	model quit30=clientage /smooth = 0.4 ; 
+	ods output OutputStatistics=stats; 
+	Title 'Linearity in the Logit: Age';
+RUN; 
+
+PROC LOESS data=ashlinePrimary PLOTS=FIT PLOTS(MAXPOINTS=NONE); 
+	model quit30=fagerstrom /smooth = 0.4 ; 
+	ods output OutputStatistics=stats; 
+	Title 'Linearity in the Logit: Nicotine Dependence';
+RUN; 
+
+PROC LOESS data=ashlinePrimary PLOTS=FIT PLOTS(MAXPOINTS=NONE); 
+	model quit30=coaching_calls_beforeFU /smooth = 0.4 ; 
+	ods output OutputStatistics=stats; 
+	Title 'Linearity in the Logit: Coaching Calls';
+RUN; 
+
+PROC LOESS data=ashlinePrimary PLOTS=FIT PLOTS(MAXPOINTS=NONE); 
+	model quit30=cc /smooth = 0.4 ; 
+	ods output OutputStatistics=stats; 
+	Title 'Linearity in the Logit: Comorbidities';
+RUN; 
