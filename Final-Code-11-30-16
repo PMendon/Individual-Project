@@ -1,6 +1,6 @@
 /*NOTE ON NOMENCLATURE: Each dataset has the base name ashline. Any change to the dataset will result in the creation of a new dataset called ashlineX where X is 
 the next sequential integer (ashline2, ashline3, ashline4, ...). The final iteration of the dataset for each analysis will be called ashlineY where Y is the type of 
-analysis (Primary, Sensitivity1, Sensitivity2, Sensitivity3)*/ 
+analysis (Primary, Sensitivity1, Sensitivity2, and mi)*/ 
 
 /*Convert raw data to csv for platform independent analysis*/ 
 LIBNAME ashline 'C:\Users\pmendon\Downloads'; 
@@ -137,5 +137,45 @@ PROC LOGISTIC data=ashlineSensitivity1 plots(only)=roc;
 RUN;
 
 /*Sensitivity Analysis 2: Add presence of mental health treatments into the model*/ 
+PROC LOGISTIC data=ashlineSensitivity2 plots(only)=roc;
+		class gender household referral numinterventions / param=ref ref=first; 
+		model quit30 (event='0') = gender referral numinterventions cc clientage fagerstrom household mental_treat; 
+		ods select globaltests oddsratios roccurve;
+RUN;
 
 /*Sensitivity Analysis 3: Impute Missng Data using Multiple Imputation by Chained Equations (MICE)*/ 
+PROC MI data=ashlineprimary out=ashline_mi nimpute=5 seed=325; 
+	class gender household numinterventions referral cc; 
+	FCS regression(clientage fagerstrom) logistic(household numinterventions gender cc referral); 
+	var /*least -> most*/ referral cc gender clientage fagerstrom quit30 household numinterventions; 
+RUN;  
+
+PROC LOGISTIC data=ashline_mi outest=ashlineimpute covout; 
+	class quit30 numinterventions / param=ref;
+	model quit30 (event='0')=clientage gender fagerstrom household numinterventions cc referral; 
+	by _imputation_; 
+ ods output ParameterEstimates=ests ODDSRATIOS=ors;
+RUN; 
+QUIT; 
+
+proc mianalyze parms=lgsparms;
+	modeleffects clientage gender fagerstrom household numinterventions cc referral;
+run;	
+
+/*End Analysis*/ 
+
+/*INTERNAL USE ONLY: IF THE ABOVE FAILS, ATTEMPT A GENMOD AND USE ESTIMATES INSTEAD OF THE ODDS RATIOS*/ 
+PROC GENMOD data=ashline_mi; 
+	class gender household numinterventions referral/ ref=first; 
+	model quit30 (event='0')=clientage gender fagerstrom household numinterventions cc referral; 
+	by _imputation_; 
+	ods output ParameterEstimates=gm_fcs; 
+RUN; 
+
+PROC MIANALYZE parms(classvar=level)=gm_fcs; 
+	class gender household numinterventions referral; 
+	modeleffects INTERCEPT clientage gender fagerstrom household numinterventions cc referral; 
+RUN; 
+/*END INTERNAL USE*/ 
+
+
