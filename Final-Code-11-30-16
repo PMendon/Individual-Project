@@ -1,6 +1,6 @@
 /*NOTE ON NOMENCLATURE: Each dataset has the base name ashline. Any change to the dataset will result in the creation of a new dataset called ashlineX where X is 
 the next sequential integer (ashline2, ashline3, ashline4, ...). The final iteration of the dataset for each analysis will be called ashlineY where Y is the type of 
-analysis (Primary, Sensitivity1, Sensitivity2, and mi)*/ 
+analysis (Primary, Sensitivity, and mi)*/ 
 
 /*Convert raw data to csv for platform independent analysis*/ 
 LIBNAME ashline 'C:\Users\pmendon\Downloads'; 
@@ -120,24 +120,20 @@ PROC LOGISTIC data=ashlinePrimary plots(only)=roc;
 RUN;
 
 /*Sensitivity Analysis 1: Create an interaction term for Fagerstrom and Household Smokers, see Chandola, T., Head, J., & Bartley, M. (2004).*/ 
-DATA ashlineSensitivity1; 
+DATA ashlineSensitivity; 
 	set ashlinePrimary; 
 		interact=fagerstrom*household; 
 RUN; 
 
-PROC MEANS data=ashlineSensitivity1; 
-	var interact; 
-RUN; 
-
 /*Perform Logistic Regression, include interaction term*/ 
-PROC LOGISTIC data=ashlineSensitivity1 plots(only)=roc;
+PROC LOGISTIC data=ashlineSensitivity plots(only)=roc;
 		class gender household referral numinterventions / param=ref ref=first; 
 		model quit30 (event='0') = gender referral numinterventions cc clientage fagerstrom household interact; 
 		ods select globaltests oddsratios roccurve;
 RUN;
 
 /*Sensitivity Analysis 2: Add presence of mental health treatments into the model*/ 
-PROC LOGISTIC data=ashlineSensitivity2 plots(only)=roc;
+PROC LOGISTIC data=ashlineSensitivity plots(only)=roc;
 		class gender household referral numinterventions / param=ref ref=first; 
 		model quit30 (event='0') = gender referral numinterventions cc clientage fagerstrom household mental_treat; 
 		ods select globaltests oddsratios roccurve;
