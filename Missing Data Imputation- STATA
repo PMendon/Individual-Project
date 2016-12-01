@@ -1,50 +1,6 @@
-*****For quit30==0********
-insheet using "C:\Users\breevanderson\Downloads\ashline.csv", comma
-
-
-drop if quit30==1
-
-
+insheet using "C:\Users\pmendon\Desktop\Project 4 Final Table Output\ashline_STATA.csv", comma
 mi set wide
-
-
-mi register imputed clientage cc gender household referral mental_treat numinterventions
-
-
-mi impute chained (reg)clientage cc (logit) gender household referral mental_treat numinterventions, add(20)
-
-
-save quit30_0, replace
-
-
-clear
-
-
-****For quit30=1******
-
-
-insheet using "C:\Users\breevanderson\Downloads\ashline.csv", comma
-
-
-drop if quit30==0
-
-
-mi set wide
-
-
-mi register imputed clientage cc gender household referral mental_treat numinterventions
-
-
-mi impute chained (reg)clientage cc (logit) gender household referral mental_treat numinterventions, add(20)
-
-
-
-
-save quit30_1, replace
-
-
-clear
-
-
-use quit30_0, clear
-append using quit30_1
+mi register imputed referral cc gender clientage fagerstrom quit30 household numinterventions
+mi impute chained (logit) referral gender quit30 household (ologit) numinterventions (regress) fagerstrom clientage cc, add(20)
+mi estimate: logit quit30 i.household fagerstrom cc i.gender clientage i.numinterventions i.referral
+logit quit30 i.household fagerstrom cc i.gender clientage i.numinterventions i.referral, or
